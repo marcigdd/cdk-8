@@ -1,0 +1,56 @@
+{
+  "name": "rs-checkout-api",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "@nestjs/common": "7.5.1",
+    "@nestjs/core": "7.5.1",
+    "@nestjs/jwt": "7.2.0",
+    "@nestjs/passport": "7.1.0",
+    "@nestjs/platform-express": "7.5.1",
+    "aws-sdk": "2.1630.0",
+    "aws-serverless-express": "3.4.0",
+    "helmet": "4.2.0",
+    "passport": "0.4.1",
+    "passport-http": "0.3.0",
+    "passport-jwt": "4.0.0",
+    "passport-local": "1.0.0",
+    "pg": "8.11.5",
+    "reflect-metadata": "0.1.13",
+    "rxjs": "6.5.4",
+    "uuid": "8.3.1"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".spec.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

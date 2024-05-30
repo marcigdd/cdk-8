@@ -5,9 +5,11 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 
 import * as rds from "aws-cdk-lib/aws-rds";
+import * as apigw from "aws-cdk-lib/aws-apigateway";
 
 import { ParameterGroup, DatabaseInstanceEngine } from "aws-cdk-lib/aws-rds";
 import { PostgresEngineVersion } from "aws-cdk-lib/aws-rds";
+import path = require("path");
 
 export class Cdk8Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -65,6 +67,28 @@ export class Cdk8Stack extends cdk.Stack {
         SECRET_ARN: dbInstance.secret?.secretArn || "",
       },
     });
-    dbInstance.secret?.grantRead(fn);
+
+    const nestJsFunction = new lambda.Function(this, "NestJsFunction", {
+      vpc,
+      environment: {
+        SECRET_ARN: dbInstance.secret?.secretArn || "",
+      },
+      code: lambda.Code.fromAsset(
+        path.resolve(__dirname, "../rs-cart-api.zip")
+      ),
+      handler: "dist/src/lambda.handler", // The exported handler in your entry point file
+      runtime: lambda.Runtime.NODEJS_20_X,
+      logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
+      memorySize: 1256,
+      timeout: cdk.Duration.seconds(5),
+    });
+    dbInstance.secret?.grantRead(nestJsFunction);
+
+    new apigw.LambdaRestApi(this, "rest-api-gateway", {
+      handler: nestJsFunction,
+      restApiName: "NestJsApiGateway",
+      proxy: true,
+      deploy: true,
+    });
   }
 }
