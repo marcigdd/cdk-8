@@ -1,16 +1,80 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as cdk from "aws-cdk-lib";
+import { Construct } from "constructs";
+
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
+
+import * as rds from "aws-cdk-lib/aws-rds";
+
+import * as iam from "aws-cdk-lib/aws-iam";
+
+import { ParameterGroup, DatabaseInstanceEngine } from "aws-cdk-lib/aws-rds";
+import { PostgresEngineVersion } from "aws-cdk-lib/aws-rds";
 
 export class Cdk8Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const vpc = new ec2.Vpc(this, "MyVPC", { maxAzs: 2 });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'Cdk8Queue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    vpc.addInterfaceEndpoint("SecretsManagerEndpoint", {
+      service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+    });
+
+    const engine = DatabaseInstanceEngine.postgres({
+      version: PostgresEngineVersion.VER_16_2,
+    });
+
+    const parameterGroup = new ParameterGroup(this, "parameter-group", {
+      engine,
+      parameters: {
+        "rds.force_ssl": "0",
+      },
+    });
+
+    const dbInstance = new rds.DatabaseInstance(this, "DBInstance", {
+      vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+      // securityGroups: [securityGroup],
+      engine,
+      parameterGroup,
+      allocatedStorage: 20,
+      backupRetention: cdk.Duration.days(0),
+      deletionProtection: false,
+      maxAllocatedStorage: 100,
+      multiAz: false,
+      publiclyAccessible: true, // Make it publicly accessible for simplicity
+      storageType: rds.StorageType.GP2,
+      databaseName: "mydb",
+      credentials: rds.Credentials.fromGeneratedSecret("postgres"),
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.T3,
+        ec2.InstanceSize.MICRO
+      ),
+    });
+
+    dbInstance.connections.allowFromAnyIpv4(ec2.Port.tcp(5432));
+
+    // Create a new secret in Secrets Manager
+    // const secret = new secretsmanager.Secret(this, "MySecret");
+
+    // Create a new Lambda function and attach it to the VPC
+    const fn = new lambda.Function(this, "MyFunction", {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "handler.handler",
+      code: lambda.Code.fromAsset("dist"),
+      vpc,
+      environment: {
+        SECRET_ARN: dbInstance.secret?.secretArn || "",
+      },
+    });
+
+    fn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: ["*"], // Adjust resource ARN as needed
+      })
+    );
+    //secret.grantRead(fn);
   }
 }
