@@ -6,8 +6,6 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 
 import * as rds from "aws-cdk-lib/aws-rds";
 
-import * as iam from "aws-cdk-lib/aws-iam";
-
 import { ParameterGroup, DatabaseInstanceEngine } from "aws-cdk-lib/aws-rds";
 import { PostgresEngineVersion } from "aws-cdk-lib/aws-rds";
 
@@ -35,7 +33,6 @@ export class Cdk8Stack extends cdk.Stack {
     const dbInstance = new rds.DatabaseInstance(this, "DBInstance", {
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      // securityGroups: [securityGroup],
       engine,
       parameterGroup,
       allocatedStorage: 20,
@@ -68,13 +65,6 @@ export class Cdk8Stack extends cdk.Stack {
         SECRET_ARN: dbInstance.secret?.secretArn || "",
       },
     });
-
-    fn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["secretsmanager:GetSecretValue"],
-        resources: ["*"], // Adjust resource ARN as needed
-      })
-    );
-    //secret.grantRead(fn);
+    dbInstance.secret?.grantRead(fn);
   }
 }
