@@ -76,7 +76,7 @@ export class Cdk8Stack extends cdk.Stack {
       code: lambda.Code.fromAsset(
         path.resolve(__dirname, "../rs-cart-api.zip")
       ),
-      handler: "dist/src/lambda.handler", // The exported handler in your entry point file
+      handler: "dist/lambda.handler", // The exported handler in your entry point file
       runtime: lambda.Runtime.NODEJS_20_X,
       logRetention: cdk.aws_logs.RetentionDays.ONE_DAY,
       memorySize: 1256,
