@@ -58,16 +58,6 @@ export class Cdk8Stack extends cdk.Stack {
     // const secret = new secretsmanager.Secret(this, "MySecret");
 
     // Create a new Lambda function and attach it to the VPC
-    const fn = new lambda.Function(this, "MyFunction", {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "handler.handler",
-      code: lambda.Code.fromAsset("dist"),
-      vpc,
-      environment: {
-        SECRET_ARN: dbInstance.secret?.secretArn || "",
-      },
-    });
-
     const nestJsFunction = new lambda.Function(this, "NestJsFunction", {
       vpc,
       environment: {
