@@ -21,22 +21,24 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "express": "^4.17.1",
     "@nestjs/common": "7.5.1",
     "@nestjs/core": "7.5.1",
     "@nestjs/jwt": "7.2.0",
     "@nestjs/passport": "7.1.0",
     "@nestjs/platform-express": "7.5.1",
+    "@nestjs/typeorm": "^10.0.2",
     "aws-sdk": "2.1630.0",
     "aws-serverless-express": "3.4.0",
+    "express": "^4.17.1",
     "helmet": "4.2.0",
     "passport": "0.4.1",
     "passport-http": "0.3.0",
     "passport-jwt": "4.0.0",
     "passport-local": "1.0.0",
-    "pg": "8.11.5",
-    "reflect-metadata": "0.1.13",
+    "pg": "^8.11.5",
+    "reflect-metadata": "^0.1.13",
     "rxjs": "6.5.4",
+    "typeorm": "^0.3.20",
     "uuid": "8.3.1"
   },
   "jest": {
@@ -52,5 +54,8 @@
     },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "devDependencies": {
+    "@types/node": "^20.13.0"
   }
 }

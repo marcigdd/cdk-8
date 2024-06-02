@@ -90,6 +90,14 @@ exports.handler = async function (event: any, context: any) {
       .promise();
     console.log('Secret:', data.SecretString);
     const secret = JSON.parse(data.SecretString ?? '');
+
+    process.env.HOST = secret.host;
+    process.env.PORT = secret.port;
+    process.env.USERNAME = secret.username;
+    process.env.PASSWORD = secret.password;
+    process.env.DBNAME = secret.dbname;
+    
+
     const client = new Client({
       host: secret.host,
       port: secret.port,
