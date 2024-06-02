@@ -8,24 +8,25 @@ import { AuthModule } from './auth/auth.module';
 import { OrderModule } from './order/order.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CartEntity, CartItemEntity } from './entitities/entitities';
+import { ConfigService } from './cart/services/config.service';
+import { ConfigModule } from './cart/config/config.module';
 
 @Module({
   imports: [
+    ConfigModule, // import ConfigModule
     AuthModule,
     CartModule,
     OrderModule,
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.HOST,
-      port: Number(process.env.PORT),
-      username: process.env.USERNAME,
-      password: process.env.PASSWORD,
-      database: process.env.DBNAME,
-      entities: [CartEntity, CartItemEntity],
-      synchronize: true, // Avoid in prod, can result in data loss
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule], // import ConfigModule
+      useFactory: async (configService: ConfigService) => {
+        await configService.init();
+        console.log('ConfigService:', configService);
+        return configService.getDbConfig();
+      },
+      inject: [ConfigService],
     }),
   ],
   controllers: [AppController],
-  providers: [],
 })
 export class AppModule {}

@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
-
-import { v4 } from 'uuid';
-
-import { Cart } from '../models';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, DeepPartial, DeleteResult } from 'typeorm';
 import { CartEntity, CartItemEntity } from 'src/entitities/entitities';
-import { DeepPartial, DeleteResult, Repository } from 'typeorm';
 
 @Injectable()
 export class CartService {
@@ -15,68 +11,50 @@ export class CartService {
     @InjectRepository(CartItemEntity)
     private readonly cartItemRepository: Repository<CartItemEntity>,
   ) {}
-  private userCarts: Record<string, Cart> = {};
 
   async findByUserId(userId: string): Promise<CartEntity> {
-    const found = (await this.cartRepository.find({ where: { userId } }))[0];
-    console.log('Found:', found);
-    return found;
+    return this.cartRepository.findOne({
+      where: { userId },
+      relations: ['items'],
+    });
   }
 
-  async createByUserId(userId: string) {
-    const id = v4(v4());
-    const userCart = {
-      id,
-      items: [],
-    };
-
-    const saved = await this.cartRepository.save({
-      id,
-      userId,
-      items: [],
-    });
-
-    console.log('Saved:', saved);
-
-    return saved;
+  async createByUserId(userId: string): Promise<CartEntity> {
+    const newCart = this.cartRepository.create({ userId });
+    return this.cartRepository.save(newCart);
   }
 
   async findOrCreateByUserId(userId: string): Promise<CartEntity> {
-    const userCart = await this.findByUserId(userId);
-
-    if (userCart) {
-      return userCart;
+    let cart = await this.findByUserId(userId);
+    if (!cart) {
+      cart = await this.createByUserId(userId);
     }
-
-    return await this.createByUserId(userId);
+    return cart;
   }
 
   async updateByUserId(
     userId: string,
-    { items }: Cart,
-  ): Promise<
-    {
-      id?: number;
-      userId?: string;
-      items?: DeepPartial<CartItemEntity[]>;
-    } & CartEntity
-  > {
-    const { id, ...rest } = await this.findOrCreateByUserId(userId);
-
-    const updatedCart: DeepPartial<CartEntity> = {
-      id,
-      ...rest,
-      items: items.map((item) => ({ ...item } as DeepPartial<CartItemEntity>)),
-    };
-
-    const updated = await this.cartRepository.save(updatedCart);
-    console.log('Updated:', updated);
-    return updated;
+    cartData: DeepPartial<CartEntity>,
+  ): Promise<CartEntity> {
+    let cart = await this.findOrCreateByUserId(userId);
+    if (cartData.items) {
+      // Remove all existing items
+      await this.cartItemRepository.remove(cart.items);
+      // Create new items
+      cart.items = await this.cartItemRepository.save(cartData.items);
+    }
+    // Update the cart
+    cart = this.cartRepository.merge(cart, cartData);
+    return this.cartRepository.save(cart);
   }
 
   async removeByUserId(userId: string): Promise<DeleteResult> {
-    const deleted = await this.cartRepository.delete({ userId });
-    console.log('Deleted:', deleted);
-    return deleted;
+    const cart = await this.findByUserId(userId);
+    if (cart) {
+      // Remove all items in the cart before deleting the cart
+      await this.cartItemRepository.remove(cart.items);
+      return this.cartRepository.delete(cart.id);
+    }
+    return null;
   }
 }

@@ -20,7 +20,6 @@ const bootstrap = async () => {
       new ExpressAdapter(expressApp),
       { cors: true, logger: ['error', 'warn', 'log', 'verbose', 'debug'] },
     );
-    app.setGlobalPrefix('cart');
     app.use(eventContext());
     app.use(helmet());
     app.use(helmet.noSniff());
@@ -40,25 +39,25 @@ const initializeDatabase = async (client) => {
   }
   try {
     await client.query(`
-        CREATE TABLE carts (
-          id UUID PRIMARY KEY,
-          user_id UUID NOT NULL,
-          created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-          updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-          status cart_status NOT NULL
-        )
-      `);
+          CREATE TABLE carts (
+            id UUID PRIMARY KEY,
+            user_id UUID NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            status cart_status NOT NULL
+          )
+        `);
   } catch (err) {
     console.warn('Table carts may already exist:', err);
   }
   try {
     await client.query(`
-        CREATE TABLE cart_items (
-          cart_id UUID REFERENCES carts(id),
-          product_id UUID,
-          count INTEGER
-        )
-      `);
+          CREATE TABLE cart_items (
+            cart_id UUID REFERENCES carts(id),
+            product_id UUID,
+            count INTEGER
+          )
+        `);
   } catch (err) {
     console.warn('Table cart_items may already exist:', err);
   }
@@ -66,10 +65,10 @@ const initializeDatabase = async (client) => {
 
 const checkTablesExist = async (client) => {
   const checkTablesQuery = `
-      SELECT tablename 
-      FROM pg_tables 
-      WHERE tablename IN ('carts', 'cart_items')
-    `;
+        SELECT tablename 
+        FROM pg_tables 
+        WHERE tablename IN ('carts', 'cart_items')
+      `;
   const res = await client.query(checkTablesQuery);
   console.log(
     'Tables found:',
@@ -96,7 +95,6 @@ exports.handler = async function (event: any, context: any) {
     process.env.USERNAME = secret.username;
     process.env.PASSWORD = secret.password;
     process.env.DBNAME = secret.dbname;
-    
 
     const client = new Client({
       host: secret.host,
