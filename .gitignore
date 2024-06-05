@@ -8,3 +8,4 @@ node_modules
 cdk.out
 node_modules
 actual-changes
+cdk/dist
